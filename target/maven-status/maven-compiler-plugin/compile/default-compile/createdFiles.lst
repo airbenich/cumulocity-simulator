@@ -1,0 +1,16 @@
+com\c8y\models\SignalStrengthBer.class
+com\c8y\models\Temperature.class
+com\c8y\models\Battery.class
+com\c8y\MQTTClient.class
+com\c8y\App$1.class
+com\c8y\models\Humidity.class
+com\c8y\App.class
+com\c8y\MeasurementBuilder.class
+com\c8y\models\Light.class
+com\c8y\models\Measurement.class
+com\c8y\models\RandomValue.class
+com\c8y\App$2.class
+com\c8y\models\Position.class
+com\c8y\helper\Common.class
+com\c8y\models\SignalStrengthRssi.class
+com\c8y\models\Custom.class
