@@ -37,22 +37,29 @@ public class App {
 	
   public static void main(String[] args) {
     if (Cumulocity.initialize()) {
-      if (Helper.valid(Helper.externalDeviceId)!= null) {
-        internalDeviceId = getInternalId(Helper.externalDeviceId);
-        if(internalDeviceId!=null) {
-          if (amITheOwnerOfTheDevice(internalDeviceId)) {
-            try {
-              createMeasurementList();
-              startMqttOrRestSimulator();
-              startPositionSimulator();
-            } catch (Exception e) {
-              logger.error("Internal error. ", e);
-            }
-          } else {
-            logger.error("Check if the device exists. Maybe you are not the owner of the device with the id ("+ internalDeviceId + ").");
+      
+      if (Helper.valid(Helper.externalDeviceId)==null) {
+        Helper.externalDeviceId = Cumulocity.createNewDevice();
+        logger.error("Cant' find the external device id. A new device with the external id ("+Helper.externalDeviceId+") has been created.");
+      } 
+      
+      internalDeviceId = getInternalId(Helper.externalDeviceId);
+      if(internalDeviceId!=null) {
+        if (amITheOwnerOfTheDevice(internalDeviceId)) {
+          try {
+            createMeasurementList();
+            startMqttOrRestSimulator();
+            startPositionSimulator();
+          } catch (Exception e) {
+            logger.error("Internal error. ", e);
           }
+        } else {
+          logger.error("Check if the device exists. Maybe you are not the owner of the device with the id ("+ internalDeviceId + ").");
         }
+      } else {
+        logger.error("Can't find the internal device id.");
       }
+      
     } else {
       logger.error("Initialisation error.");
     }
@@ -117,7 +124,6 @@ public class App {
 	public static void startPositionSimulator() {
 		if(Helper.showDevicePostion.equals("true")) {
 			try {
-			  // TODO
 				positionSimulator(internalDeviceId, Helper.numberMeasurements, Helper.delayInSecondsBetweenEachMeasurement);
 			} catch(Exception e) {
 				logger.error("Can't display device position.");

@@ -5,12 +5,18 @@ import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cumulocity.model.Agent;
 import com.cumulocity.model.authentication.CumulocityBasicCredentials;
 import com.cumulocity.model.authentication.CumulocityCredentials;
+import com.cumulocity.rest.representation.identity.ExternalIDRepresentation;
+import com.cumulocity.rest.representation.inventory.ManagedObjectRepresentation;
 import com.cumulocity.sdk.client.Platform;
 import com.cumulocity.sdk.client.PlatformBuilder;
+import com.cumulocity.sdk.client.identity.IdentityApi;
 import com.cumulocity.sdk.client.inventory.InventoryApi;
 import com.cumulocity.sdk.client.measurement.MeasurementApi;
+
+import c8y.IsDevice;
 
 public class Cumulocity {
 
@@ -63,4 +69,31 @@ public class Cumulocity {
       return false;
     } 
   }
+  
+  public static String createNewDevice() {
+    try {
+      String hash = Helper.getRamdomHash();
+      String externalId = "Simulator_" + hash;
+
+      ManagedObjectRepresentation managedObject = new ManagedObjectRepresentation();
+      managedObject.set(new IsDevice());
+      managedObject.set(new Agent());
+      managedObject.setName("Simulator_device_"+hash);      
+      managedObject = inventoryApi.create(managedObject);
+
+      ExternalIDRepresentation externalIDRepresentation = new ExternalIDRepresentation();
+      externalIDRepresentation.setExternalId(externalId);
+      externalIDRepresentation.setType("c8y_Serial");
+      externalIDRepresentation.setManagedObject(managedObject);
+      
+      IdentityApi identityApi = platform.getIdentityApi();
+      identityApi.create(externalIDRepresentation);
+      
+      return externalId;
+    } catch (Exception e) {
+      logger.error("Can't create a managed object or an external id. ", e);
+      return null;
+    }
+  }
+
 }

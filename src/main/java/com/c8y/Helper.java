@@ -3,6 +3,7 @@ package com.c8y;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -203,9 +204,8 @@ public class Helper {
 	}
 
 	public static String valid(String str) {
-	  String tmp = str.replaceAll("\\s+","");
-	  if(tmp!=null && tmp.length()>=1) {
-	    return tmp;
+	  if(str!=null && str.length()>=1) {
+	    return str.replaceAll("\\s+","");
 	  }
 	  return null;
 	}
@@ -221,5 +221,16 @@ public class Helper {
 	    return 0;
 	  }
 	}
+	
+ public static String getRamdomHash() {
+    char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+    StringBuilder sb = new StringBuilder(20);
+    Random random = new Random();
+    for (int i = 0; i < 20; i++) {
+        char c = chars[random.nextInt(chars.length)];
+        sb.append(c);
+    }
+    return sb.toString();
+  }
 	
 }
