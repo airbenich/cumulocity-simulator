@@ -1,13 +1,14 @@
 package com.c8y;
 
-import java.io.File;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.c8y.helper.Common;
 import com.c8y.models.Battery;
 import com.c8y.models.Custom;
 import com.c8y.models.Humidity;
@@ -32,55 +33,42 @@ public class App {
 
 	private static final Logger logger = LoggerFactory.getLogger(App.class);
 	protected static Measurement[] measurements;
-	protected static String externalId;
-	protected static String internalId;
-	protected static int delayInSecondsBetweenEachMeasurement;
-	protected static int totalNumberMeasurements;
+	protected static String internalDeviceId;
 	
-	public static void main(String[] args) {
-		
-		try {
-			
-			if(Common.getPropertyFile()!=null) {
-				
-				boolean initialiationStatus = MeasurementBuilder.initialize();
-				externalId = MeasurementBuilder.prop.getProperty("externalDeviceId");
-				internalId = getInternalId(externalId);
-				delayInSecondsBetweenEachMeasurement = Integer.parseInt(MeasurementBuilder.prop.getProperty("delayInSecondsBetweenEachMeasurement"));
-				totalNumberMeasurements = Integer.parseInt(MeasurementBuilder.prop.getProperty("numberMeasurements"));
-				
-				if(initialiationStatus) {
-					
-					if(amITheOwnerOfTheDevice(internalId)) {
-						try {
-							
-							createMeasurementList();
-							
-							startMqttOrRestSimulator();
-							
-							startPositionSimulator();
-							
-						} catch(Exception e) {
-							logger.error("Can't create measurments. Check your external device id and the list of your measurments.");
-						}
-					} else {
-						logger.error("Can't start the simulator.");
-					}
-				}
-			}
-		} catch(Exception e) {
-			logger.error("Can't read the property file or the keys. Please copy your property file into the folowing folder: \n"+System.getProperty("user.home")+File.separator+"simulator.properties");
-		}
-
-	}
+  public static void main(String[] args) {
+    if (Cumulocity.initialize()) {
+      if (Helper.valid(Helper.externalDeviceId)!= null) {
+        internalDeviceId = getInternalId(Helper.externalDeviceId);
+        if(internalDeviceId!=null) {
+          if (amITheOwnerOfTheDevice(internalDeviceId)) {
+            try {
+              createMeasurementList();
+              startMqttOrRestSimulator();
+              startPositionSimulator();
+            } catch (Exception e) {
+              logger.error("Internal error. ", e);
+            }
+          } else {
+            logger.error("Check if the device exists. Maybe you are not the owner of the device with the id ("+ internalDeviceId + ").");
+          }
+        }
+      }
+    } else {
+      logger.error("Initialisation error.");
+    }
+  }
 
 	public static void createMeasurementList() {
+	  
+		ArrayList<String> measurementListFromSettingsFile = new ArrayList<String>(Arrays.asList(Helper.measurements.toLowerCase().split(",")));
+    HashSet<String> hashSet = new HashSet<String>(measurementListFromSettingsFile);
+    measurementListFromSettingsFile.clear();
+    measurementListFromSettingsFile.addAll(hashSet);
 		
-		String[] measurementList = MeasurementBuilder.prop.getProperty("measurements").toLowerCase().replaceAll("\\s+","").split(",");
-		measurements = new Measurement[measurementList.length];
+		measurements = new Measurement[measurementListFromSettingsFile.size()];
 
-		for(int i=0; i<measurementList.length; i++) {
-		    switch (measurementList[i]) {
+		for(int i=0; i<measurementListFromSettingsFile.size(); i++) {
+		    switch (measurementListFromSettingsFile.get(i)) {    
 		        case "temperature":
 		            measurements[i] = new Temperature();
 		            break;
@@ -109,21 +97,28 @@ public class App {
 	}
 	
 	public static void startMqttOrRestSimulator() {
-		if(MeasurementBuilder.prop.getProperty("protocol").equals("mqtt")) {
-			createNewMQTTSimulator(externalId, totalNumberMeasurements, delayInSecondsBetweenEachMeasurement, measurements);
-			logger.info("Simulator is up and running. Sending measurements via MQTT :)");
-		} else if(MeasurementBuilder.prop.getProperty("protocol").equals("rest")) {
-			createNewRESTSimulator(internalId, totalNumberMeasurements, delayInSecondsBetweenEachMeasurement, measurements);
-			logger.info("Simulator is up and running. Sending measurements via REST :)");
-		} else {
-			logger.error("Unknown protocol. Please choose between mqtt or rest.");
-		}
+	  if(Helper.numberMeasurements>=1) {
+	    if(Helper.delayInSecondsBetweenEachMeasurement>=0) {
+	      if(Helper.protocol.equals("mqtt")) {
+	        createNewMQTTSimulator(Helper.externalDeviceId, Helper.numberMeasurements, Helper.delayInSecondsBetweenEachMeasurement, measurements);
+	      } else if(Helper.protocol.equals("rest")) {
+	        createNewRESTSimulator(internalDeviceId, Helper.numberMeasurements, Helper.delayInSecondsBetweenEachMeasurement, measurements);
+	      } else {
+	        logger.error("Unknown protocol. Choose between mqtt or rest.");
+	      }
+	    } else {
+	      logger.error("Check delay between measurements.");
+	    }
+	  } else {
+	    logger.error("Check number of measurements.");
+	  }
 	}
 	
 	public static void startPositionSimulator() {
-		if(MeasurementBuilder.prop.getProperty("showDevicePostion").equals("true")) {
+		if(Helper.showDevicePostion.equals("true")) {
 			try {
-				positionSimulator(getInternalId(MeasurementBuilder.prop.getProperty("externalDeviceId")), totalNumberMeasurements, delayInSecondsBetweenEachMeasurement);
+			  // TODO
+				positionSimulator(internalDeviceId, Helper.numberMeasurements, Helper.delayInSecondsBetweenEachMeasurement);
 			} catch(Exception e) {
 				logger.error("Can't display device position.");
 			}		
@@ -132,7 +127,7 @@ public class App {
 	
 	public static void positionSimulator(String id, int numberMeasurements, int sleepTimerInSeconds) {
 
-		String[] route = MeasurementBuilder.prop.getProperty("position").split(";");
+		String[] route = Helper.position.split(";");
 		
 		ManagedObjectRepresentation tempObject = null;
 		ManagedObjectRepresentation managedObjectRepresentation = null;
@@ -150,69 +145,79 @@ public class App {
 			position.setLat(BigDecimal.valueOf(Double.parseDouble(route[counter].split(",")[1])));
 			
 			// my existing managed object
-			managedObjectRepresentation = MeasurementBuilder.inventoryApi.get(GId.asGId(id));
+			managedObjectRepresentation = Cumulocity.inventoryApi.get(GId.asGId(id));
 			
 			// create a clone of the managed object
 			tempObject = new ManagedObjectRepresentation();
 			tempObject.setId(managedObjectRepresentation.getId());
 			tempObject.set(position);
-			MeasurementBuilder.inventoryApi.update(tempObject);
+			Cumulocity.inventoryApi.update(tempObject);
 			counter++;
-			Common.sleep(sleepTimerInSeconds);
+			Helper.sleep(sleepTimerInSeconds);
 		}
 	}
 	
 	public static String getInternalId(String externalId) {
-		IdentityApi identityApi = MeasurementBuilder.platform.getIdentityApi();				
-		ExternalIDRepresentation externalIDRepresentation = identityApi.getExternalId(new ID("c8y_Serial", externalId));
-		return externalIDRepresentation.getManagedObject().getId().getValue();
+	  try {
+	    IdentityApi identityApi = Cumulocity.platform.getIdentityApi();       
+	    ExternalIDRepresentation externalIDRepresentation = identityApi.getExternalId(new ID("c8y_Serial", externalId));
+	    return externalIDRepresentation.getManagedObject().getId().getValue();
+	  } catch (Exception e) {
+	    logger.error("Check your external Id. ", e);
+	    return null;
+	  }
 	}
 	
 	public static boolean amITheOwnerOfTheDevice(String id) {
 		try {
-			ManagedObjectRepresentation managedObjectRepresentation = MeasurementBuilder.inventoryApi.get(GId.asGId(id));
-			if(managedObjectRepresentation.getOwner().equals(MeasurementBuilder.prop.getProperty("username"))) {
+			ManagedObjectRepresentation managedObjectRepresentation = Cumulocity.inventoryApi.get(GId.asGId(id));
+			if(managedObjectRepresentation.getOwner().equals(Helper.username)) {
 				return true;
 			} else {
-				logger.error("Check if the device exists. Maybe you are not the owner of the device with the id ("+id+").");
+				return false;
 			}			
 		} catch(Exception e) {
 			return false;
 		}
-		return false;
 	}
 	
 	public static void createNewMQTTSimulator(String id, int numberMeasurements, int sleepTimerInSeconds, Measurement[] measurements) {
 		
-		MqttClient client = MQTTClient.createNewMqttClient(id);
-		
-		for(int i=0; i<measurements.length; i++) {
-			Measurement measurement = measurements[i];
-			RandomValue randomValue = new RandomValue(measurement.getStartValue(), measurement.getMinValue(), measurement.getMaxValue(), measurement.getVariance());
-			Thread thread = new Thread(new Runnable() {
-				public void run() {
-					if(measurement instanceof Temperature) {
-						MeasurementBuilder.createTemperatureMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					} else if(measurement instanceof Humidity) {
-						MeasurementBuilder.createHumidityMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					} else if(measurement instanceof Battery) {
-						MeasurementBuilder.createBatteryMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					}  else if(measurement instanceof SignalStrengthBer) {
-						MeasurementBuilder.createSignalStrengthBerMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					} else if(measurement instanceof SignalStrengthRssi) {
-						MeasurementBuilder.createSignalStrengthSsiMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					} else if(measurement instanceof Light) {
-						MeasurementBuilder.createLightMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					} else if(measurement instanceof Custom) {
-						MeasurementBuilder.createCustomMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
-					}					
-					else {
-						logger.error("Unknown measurement.");
-					}
-				}
-			});
-			thread.start();			
-		}
+	  try {
+	    MqttClient client = MQTTClient.createNewMqttClient(id);
+	    
+	    for(int i=0; i<measurements.length; i++) {
+	      Measurement measurement = measurements[i];
+	      RandomValue randomValue = new RandomValue(measurement.getStartValue(), measurement.getMinValue(), measurement.getMaxValue(), measurement.getVariance());
+	      Thread thread = new Thread(new Runnable() {
+	        public void run() {
+	          if(measurement instanceof Temperature) {
+	            MeasurementBuilder.createTemperatureMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          } else if(measurement instanceof Humidity) {
+	            MeasurementBuilder.createHumidityMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          } else if(measurement instanceof Battery) {
+	            MeasurementBuilder.createBatteryMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          }  else if(measurement instanceof SignalStrengthBer) {
+	            MeasurementBuilder.createSignalStrengthBerMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          } else if(measurement instanceof SignalStrengthRssi) {
+	            MeasurementBuilder.createSignalStrengthSsiMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          } else if(measurement instanceof Light) {
+	            MeasurementBuilder.createLightMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          } else if(measurement instanceof Custom) {
+	            MeasurementBuilder.createCustomMQTTmeasurement(client, numberMeasurements, sleepTimerInSeconds, randomValue);
+	          }         
+	          else {
+	            logger.error("Unknown measurement.");
+	          }
+	        }
+	      });
+	      
+	      thread.start();
+	      logger.info("Simulator is up and running. Sending measurements via MQTT :)");
+	    }
+	  } catch (Exception e) {
+	    logger.error("Can't create a MQTT client. ",e);
+	  }
 	}
 
 	public static void createNewRESTSimulator(String id, int numberMeasurements, int sleepTimerInSeconds, Measurement[] measurements) {
@@ -241,8 +246,10 @@ public class App {
 					}
 				}
 			});
+			
 			thread.start();
-		}
-	}
+			logger.info("Simulator is up and running. Sending measurements via REST :)");
+    }
+  }
 
 }

@@ -1,26 +1,22 @@
 package com.c8y.models;
 
-import java.util.Properties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.c8y.App;
-import com.c8y.helper.Common;
+import com.c8y.Helper;
 
 public class Battery extends Measurement {
 	
-	static Logger logger = LoggerFactory.getLogger(App.class);
-	static Properties prop = Common.getPropertyFile();
-
+	static Logger logger = LoggerFactory.getLogger(Battery.class);
+	
 	public Battery() {
 		try {
-			super.startValue = Integer.parseInt(prop.getProperty("battery_startValue"));
-			super.minValue = Integer.parseInt(prop.getProperty("battery_minValue"));
-			super.maxValue = Integer.parseInt(prop.getProperty("battery_maxValue"));
-			super.variance = Integer.parseInt(prop.getProperty("battery_variance"));
+			super.startValue = Helper.toInt(Helper.battery_startValue);
+			super.minValue = Helper.toInt(Helper.battery_minValue);
+			super.maxValue = Helper.toInt(Helper.battery_maxValue);
+			super.variance = Helper.toInt(Helper.battery_variance);
 		} catch(Exception e) {
-			logger.debug("Can't read battery measurement settings.");
+			logger.debug("Can't read battery measurement settings. ", e);
 		}
 	}
 }

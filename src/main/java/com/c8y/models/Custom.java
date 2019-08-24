@@ -1,26 +1,22 @@
 package com.c8y.models;
 
-import java.util.Properties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.c8y.App;
-import com.c8y.helper.Common;
+import com.c8y.Helper;
 
 public class Custom extends Measurement {
 	
-	static Logger logger = LoggerFactory.getLogger(App.class);
-	static Properties prop = Common.getPropertyFile();
+	static Logger logger = LoggerFactory.getLogger(Custom.class);
 
 	public Custom() {
 		try {
-			super.startValue = Integer.parseInt(prop.getProperty("custom_startValue"));
-			super.minValue = Integer.parseInt(prop.getProperty("custom_minValue"));
-			super.maxValue = Integer.parseInt(prop.getProperty("custom_maxValue"));
-			super.variance = Integer.parseInt(prop.getProperty("custom_variance"));
+			super.startValue = Helper.toInt(Helper.custom_startValue);
+			super.minValue = Helper.toInt(Helper.custom_minValue);
+			super.maxValue = Helper.toInt(Helper.custom_maxValue);
+			super.variance = Helper.toInt(Helper.custom_variance);
 		} catch(Exception e) {
-			logger.debug("Can't read custom measurement settings.");
+			logger.debug("Can't read custom measurement settings. ", e);
 		}
 	}
 }
