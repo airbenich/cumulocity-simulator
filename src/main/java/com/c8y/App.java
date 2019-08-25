@@ -5,9 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
+import org.apache.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.c8y.models.Battery;
 import com.c8y.models.Custom;
@@ -31,7 +30,7 @@ import c8y.Position;
  */
 public class App {
 
-	private static final Logger logger = LoggerFactory.getLogger(App.class);
+	private static final Logger logger = Logger.getLogger(App.class);
 	protected static Measurement[] measurements;
 	protected static String internalDeviceId;
 	

@@ -3,10 +3,9 @@ package com.c8y;
 import java.math.BigDecimal;
 import java.util.Random;
 
+import org.apache.log4j.Logger;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.c8y.models.RandomValue;
 import com.cumulocity.model.idtype.GId;
@@ -22,7 +21,7 @@ import c8y.TemperatureMeasurement;
 
 public class MeasurementBuilder {
 	
-	static Logger logger = LoggerFactory.getLogger(MeasurementBuilder.class);
+  private static final Logger logger = Logger.getLogger(MeasurementBuilder.class);
 
 	private MeasurementBuilder() {}
 	

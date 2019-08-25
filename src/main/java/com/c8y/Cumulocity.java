@@ -2,8 +2,7 @@ package com.c8y;
 
 import java.io.File;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import com.cumulocity.model.Agent;
 import com.cumulocity.model.authentication.CumulocityBasicCredentials;
@@ -20,7 +19,7 @@ import c8y.IsDevice;
 
 public class Cumulocity {
 
-  private final static Logger logger = LoggerFactory.getLogger(Cumulocity.class);
+  private static final Logger logger = Logger.getLogger(Cumulocity.class);
   
   public static CumulocityCredentials credentials = null;
   public static Platform platform = null;
@@ -88,6 +87,9 @@ public class Cumulocity {
       
       IdentityApi identityApi = platform.getIdentityApi();
       identityApi.create(externalIDRepresentation);
+      
+      // Helper.prop.setProperty("externalDeviceId", externalId);
+      // Helper.prop.store(new FileOutputStream(filePath), null);
       
       return externalId;
     } catch (Exception e) {
