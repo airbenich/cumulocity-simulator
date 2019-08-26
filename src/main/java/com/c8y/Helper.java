@@ -104,9 +104,7 @@ public class Helper {
       setSettingsFilerValues();
       return prop;
     } catch (IOException e) {
-      logger.error(
-          "Can't read the property file. Copy your property file (simulator.properties) into the following folder: "
-              + filePath);
+      logger.error("Can't read the property file. Copy your property file (simulator.properties) into the following folder: "+ filePath);
       prop = null;
       return null;
     }
@@ -121,8 +119,14 @@ public class Helper {
 
     protocol = valid(prop.getProperty("protocol"));
     externalDeviceId = valid(prop.getProperty("externalDeviceId"));
-    delayInSecondsBetweenEachMeasurement = toInt(
-        valid(prop.getProperty("delayInSecondsBetweenEachMeasurement")));
+    
+    String delay = valid(prop.getProperty("delayInSecondsBetweenEachMeasurement"));
+    if(toInt(delay)<1) {
+      delayInSecondsBetweenEachMeasurement = 1;
+    } else {
+      delayInSecondsBetweenEachMeasurement = toInt(delay);
+    }
+    
     numberMeasurements = toInt(valid(prop.getProperty("numberMeasurements")));
     measurements = valid(prop.getProperty("measurements"));
     showDevicePostion = valid(prop.getProperty("showDevicePostion"));
