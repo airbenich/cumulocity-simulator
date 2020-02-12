@@ -63,6 +63,7 @@ public class MeasurementBuilder {
 				temperatureMeasurement.setT(new MeasurementValue(BigDecimal.valueOf(getRandomValue(randomValue)), Helper.temperature_unit));
 				measurementRepresentation.setType(Helper.temperature_fragment);
 				measurementRepresentation.set(temperatureMeasurement);
+				measurementRepresentation.setDateTime(new DateTime());
 				Cumulocity.measurementApi.create(measurementRepresentation);
 				Helper.sleep(sleepTimerInSeconds);
 			}
@@ -102,6 +103,7 @@ public class MeasurementBuilder {
 				HumidityMeasurement humidityMeasurement = new HumidityMeasurement();
 				humidityMeasurement.setH(new MeasurementValue(BigDecimal.valueOf(getRandomValue(randomValue)), Helper.humidity_unit));
 				measurementRepresentation.setType(Helper.humidity_fragment);
+        measurementRepresentation.setDateTime(new DateTime());
 				measurementRepresentation.set(humidityMeasurement);
 				Cumulocity.measurementApi.create(measurementRepresentation);
 				Helper.sleep(sleepTimerInSeconds);
@@ -152,6 +154,7 @@ public class MeasurementBuilder {
 				Battery battery = new Battery();
 				battery.setLevel(new MeasurementValue(BigDecimal.valueOf(counter), Helper.battery_unit));
 				measurementRepresentation.setType(Helper.battery_fragment);
+        measurementRepresentation.setDateTime(new DateTime());
 				measurementRepresentation.set(battery);
 				Cumulocity.measurementApi.create(measurementRepresentation);
 				counter += 1;
@@ -193,6 +196,7 @@ public class MeasurementBuilder {
 				SignalStrength signalStrength = new SignalStrength();
 				signalStrength.setBer(new MeasurementValue(BigDecimal.valueOf(getRandomValue(randomValue)), Helper.signalStrength_ber_unit));
 				measurementRepresentation.setType(Helper.signalStrength_ber_fragment);
+        measurementRepresentation.setDateTime(new DateTime());
 				measurementRepresentation.set(signalStrength);
 				Cumulocity.measurementApi.create(measurementRepresentation);
 				Helper.sleep(sleepTimerInSeconds);
@@ -233,6 +237,7 @@ public class MeasurementBuilder {
 				SignalStrength signalStrength = new SignalStrength();
 				signalStrength.setRssi(new MeasurementValue(BigDecimal.valueOf(getRandomValue(randomValue)), Helper.signalStrength_ssi_unit));
 				measurementRepresentation.setType(Helper.signalStrength_ssi_fragment);
+        measurementRepresentation.setDateTime(new DateTime());
 				measurementRepresentation.set(signalStrength);
 				Cumulocity.measurementApi.create(measurementRepresentation);
 				Helper.sleep(sleepTimerInSeconds);
@@ -283,6 +288,7 @@ public class MeasurementBuilder {
 				LightMeasurement lightMeasurement = new LightMeasurement();
 				lightMeasurement.setE(new MeasurementValue(BigDecimal.valueOf(counter), Helper.light_unit));
 				measurementRepresentation.setType(Helper.light_fragment);
+        measurementRepresentation.setDateTime(new DateTime());
 				measurementRepresentation.set(lightMeasurement);
 				Cumulocity.measurementApi.create(measurementRepresentation);
 				counter += 1;
